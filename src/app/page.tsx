@@ -5,6 +5,9 @@ import { useState } from "react";
 export default function Home() {
   const [name, setName] = useState("");
   const [diskSize, setDiskSize] = useState(50);
+  const [response, setResponse] = useState<string | null>(null);
+  const [backendError, setbackendError] = useState<string | null>(null);
+  const [backendStatus, setbackendStatus] = useState<number | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -17,17 +20,63 @@ export default function Home() {
         },
         body: JSON.stringify({
           serverName: name,
-          diskSize: diskSize
+          diskSize: diskSize,
         }),
       });
-      console.log(res);
-      const data = await res.json();
-      console.log("Name:", name);
-      console.log("Response:", data);
+
+      if (res.ok) {
+        const data = await res.json();
+        setResponse(data.url); // store API response
+      }
+      else {
+        setbackendError(res.statusText);
+        setbackendStatus(res.status);
+      }
+
     } catch (err) {
-      console.error("Error fetching /server-request/api/test:", err);
+      console.error("Error fetching /server-request/api/trigger:", err);
+      setbackendError(JSON.stringify(err));
     }
   };
+
+  // if we already got a response, just show it
+  if (response) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "monospace",
+          padding: "1rem",
+        }}
+      >
+        <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+          Approval pending in {response}
+        </pre>
+      </div>
+    );
+  }
+
+  if (backendError) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "monospace",
+          padding: "1rem",
+        }}
+      >
+        <pre style={{ whiteSpace: "pre-wrap", wordBreak: "break-word" }}>
+          Encountered error {backendStatus}: {backendError}
+        </pre>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -68,16 +117,33 @@ export default function Home() {
             }}
           />
         </label>
-
+        <label style={{ display: "flex", flexDirection: "column" }}>
+          Disk Size (GB):
+          <input
+            type="number"
+            value={diskSize}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setDiskSize(Number(e.target.value))   // ensure it's stored as number
+            }
+            min={30}   // prevent negative or 0
+            required
+            style={{
+              padding: "0.5rem",
+              border: "1px solid #ccc",
+              borderRadius: "6px",
+              marginTop: "0.5rem",
+            }}
+          />
+        </label>
         <button
           type="submit"
           style={{
             alignSelf: "center",
             padding: "0.5rem 1.25rem",
-            backgroundColor: "#222",     // dark gray button
-            color: "#eee",               // light text
-            border: "1px solid #444",    // subtle border
-            borderRadius: "9999px",      // pill shape
+            backgroundColor: "#222",
+            color: "#eee",
+            border: "1px solid #444",
+            borderRadius: "9999px",
             cursor: "pointer",
             fontSize: "1rem",
             fontWeight: "500",
