@@ -1,0 +1,18 @@
+// app/api/trigger/route.ts
+export async function POST(req: Request) {
+  const body = await req.json(); // parse JSON body
+
+  const { serverName, diskSize, operatingSystem } = body as {
+    serverName: string;
+    diskSize: string;
+    operatingSystem: string;
+  };
+
+  // Example: log form data (later you can trigger your pipeline here)
+  console.log("Received:", serverName, diskSize, operatingSystem);
+
+  return new Response(JSON.stringify({ success: true }), {
+    status: 200,
+    headers: { "Content-Type": "application/json" },
+  });
+}
